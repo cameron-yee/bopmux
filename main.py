@@ -1,3 +1,4 @@
+import colors
 import os
 import queue
 import time
@@ -21,10 +22,12 @@ BLOCK_SIZE = 512
 LATENCY = "low"
 SAMPLE_RATE = 44100  # Sampling rate (Hz)
 
-ATTACK_SPEED = 0.7     # How fast bars jump up on audio spikes (0.0 to 1.0)
-FREQUENCY_BINS = 1     # Number of frequency bins to print
-GRAVITY = 0.5          # How fast the bars float down (characters per frame)
-MAX_PUMPED_LEVEL = 30  # Maximum height of a terminal bar in characters
+ATTACK_SPEED = 0.7  # How fast bars jump up on audio spikes (0.0 to 1.0)
+FREQUENCY_BINS = 1  # Number of frequency bins to print
+GRAVITY = 0.5  # How fast the bars float down (characters per frame)
+MAX_PUMPED_LEVEL = len(
+    colors.GRAY_GRADIENT
+)  # Maximum height of a terminal bar in characters
 
 REFRESH_RATE = 1 / 60
 
@@ -71,7 +74,7 @@ def process_frequency_bin(bin_index, bin_data):
     smoothed_pumped_levels[bin_index] = updated_frequency_pumped_level
 
     pumped_level_lookup = int(updated_frequency_pumped_level)
-    tmux.update_user_status_style(pumped_level_lookup)
+    tmux.update_user_status_background_colors(pumped_level_lookup)
 
 
 def process_audio_data(audio_data):
@@ -98,7 +101,13 @@ def audio_callback(indata, frames, time_info, status):
 
 
 def main():
-    user_status_style = tmux.get_user_status_style()
+    user_status_style = tmux.get_global_tmux_option("status-style")
+    user_status_left = tmux.get_global_tmux_option("status-left")
+    user_status_right = tmux.get_global_tmux_option("status-right")
+    user_window_status_current_style = tmux.get_global_tmux_option(
+        "window-status-current-style"
+    )
+    user_window_status_style = tmux.get_global_tmux_option("window-status-style")
 
     input_stream = sd.RawInputStream(
         samplerate=SAMPLE_RATE,
@@ -124,7 +133,13 @@ def main():
                 if latest_frame is not None:
                     process_audio_data(latest_frame)
         except KeyboardInterrupt:
-            tmux.reset_user_status_style(user_status_style)
+            tmux.reset_user_tmux_option("status-style", user_status_style)
+            tmux.reset_user_tmux_option("status-left", user_status_left)
+            tmux.reset_user_tmux_option("status-right", user_status_right)
+            tmux.reset_user_tmux_option(
+                "window-status-current-style", user_window_status_current_style
+            )
+            tmux.reset_user_tmux_option("window-status-style", user_window_status_style)
 
 
 if __name__ == "__main__":

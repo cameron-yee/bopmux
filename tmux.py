@@ -1,61 +1,63 @@
+import colors
 import libtmux
-
-GRAY_GRADIENT = [
-    "#1a1a1a",
-    "#212121",
-    "#282828",
-    "#2f2f2f",
-    "#363636",
-    "#3d3d3d",
-    "#444444",
-    "#4b4b4b",
-    "#525252",
-    "#595959",
-    "#606060",
-    "#676767",
-    "#6e6e6e",
-    "#757575",
-    "#7c7c7c",
-    "#838383",
-    "#8a8a8a",
-    "#919191",
-    "#989898",
-    "#9f9f9f",
-    "#a6a6a6",
-    "#adadad",
-    "#b4b4b4",
-    "#bbbbbb",
-    "#c2c2c2",
-    "#c9c9c9",
-    "#d0d0d0",
-    "#d7d7d7",
-    "#dedede",
-    "#e6e6e6",
-]
+import re
 
 
-def get_user_status_style():
+def get_global_tmux_option(option):
     server = libtmux.Server()
     if not server.sessions:
         return
 
-    status_style = server.show_option("status-style", global_=True)
-    return status_style
+    return server.show_option(option, global_=True)
 
 
-def update_user_status_style(i):
+def get_global_tmux_option(option):
     server = libtmux.Server()
-
     if not server.sessions:
         return
 
-    color = GRAY_GRADIENT[i]
-    server.cmd("set-option", "-g", "status-style", f"bg={color}")
+    return server.show_option(option, global_=True)
 
 
-def reset_user_status_style(user_status_style):
-    if user_status_style is not None:
+def update_user_status_background_colors(i):
+    server = libtmux.Server()
+    if not server.sessions:
+        return
+
+    status_style_color = colors.GRAY_GRADIENT[i]
+    window_status_current_style_color = colors.GRAY_GRADIENT[max(0, i - 5)]
+    window_status_style_color = colors.GRAY_GRADIENT[max(0, i - 10)]
+
+    regex = r"bg=[^,\]]+"
+    status_left = get_global_tmux_option("status-left")
+    if status_left is not None and status_left:
+        updated_status_left = re.sub(
+            regex, lambda m: f"bg={status_style_color}", status_left
+        )
+        server.cmd("set-option", "-g", "status-left", updated_status_left)
+
+    status_right = get_global_tmux_option("status-right")
+    if status_right is not None and status_right:
+        updated_status_right = re.sub(
+            regex, lambda m: f"bg={status_style_color}", status_right
+        )
+        server.cmd("set-option", "-g", "status-right", updated_status_right)
+
+    server.cmd("set-option", "-g", "status-style", f"bg={status_style_color}")
+    server.cmd(
+        "set-option",
+        "-g",
+        "window-status-current-style",
+        f"bg={window_status_current_style_color}",
+    )
+    server.cmd(
+        "set-option", "-g", "window-status-style", f"bg={window_status_style_color}"
+    )
+
+
+def reset_user_tmux_option(option, value):
+    if value is not None:
         server = libtmux.Server()
         if not server.sessions:
             return
-        server.cmd("set-option", "-g", "status-style", user_status_style)
+        server.cmd("set-option", "-g", option, value)
