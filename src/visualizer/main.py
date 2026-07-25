@@ -1,8 +1,10 @@
-import colors
 import os
 import queue
+import signal
+import sys
 import time
-import tmux
+from visualizer import themes
+from visualizer import tmux
 
 import numpy as np
 
@@ -25,19 +27,22 @@ SAMPLE_RATE = 44100  # Sampling rate (Hz)
 ATTACK_SPEED = 0.7  # How fast bars jump up on audio spikes (0.0 to 1.0)
 FREQUENCY_BINS = 1  # Number of frequency bins to print
 GRAVITY = 0.5  # How fast the bars float down (characters per frame)
-MAX_PUMPED_LEVEL = len(
-    colors.GRAY_GRADIENT
-)  # Maximum height of a terminal bar in characters
+REFRESH_RATE = 1 / 120
 
-REFRESH_RATE = 1 / 60
+USER_STATUS_STYLE = None
+USER_STATUS_LEFT = None
+USER_STATUS_RIGHT = None
+USER_WINDOW_STATUS_CURRENT_STYLE = None
+USER_WINDOW_STATUS_STYLE = None
 
 # Thread-safe queue to pass audio frames from callback to visualizer
 audio_queue = queue.Queue()
 smoothed_pumped_levels = np.zeros(FREQUENCY_BINS)
 
 
-def update_frequency_pumped_level(db_value, current_frequency_pumped_level):
-    target_frequency_pumped_level = max(0, min(int(db_value), MAX_PUMPED_LEVEL))
+def update_frequency_pumped_level(db_value, current_frequency_pumped_level, theme):
+    max_pumped_level = len(theme)
+    target_frequency_pumped_level = max(0, min(int(db_value), max_pumped_level))
 
     # Apply Physics Engine (Snappy Rise, Constant Gravity Drop)
     if target_frequency_pumped_level > current_frequency_pumped_level:
@@ -54,30 +59,31 @@ def update_frequency_pumped_level(db_value, current_frequency_pumped_level):
     return current_frequency_pumped_level
 
 
-def get_frequency_bin_pumped_level(bin_data, current_frequency_pumped_level):
+def get_frequency_bin_pumped_level(bin_data, current_frequency_pumped_level, theme):
     """
     Convert raw voltage to human-perceived Decibels (dB scale)
     Adds 1e-5 to avoid a mathematically undefined log10(0)
     """
     mean_energy = np.mean(bin_data)
     db_value = 20 * np.log10(mean_energy + 1e-5) + 40
-    return update_frequency_pumped_level(db_value, current_frequency_pumped_level)
+    return update_frequency_pumped_level(db_value, current_frequency_pumped_level, theme)
 
 
-def process_frequency_bin(bin_index, bin_data):
+def process_frequency_bin(bin_index, bin_data, theme):
     global smoothed_pumped_levels
 
     current_frequency_pumped_level = smoothed_pumped_levels[bin_index]
     updated_frequency_pumped_level = get_frequency_bin_pumped_level(
-        bin_data, current_frequency_pumped_level
+        bin_data, current_frequency_pumped_level, theme
     )
     smoothed_pumped_levels[bin_index] = updated_frequency_pumped_level
 
     pumped_level_lookup = int(updated_frequency_pumped_level)
-    tmux.update_user_status_background_colors(pumped_level_lookup)
+
+    tmux.update_user_status_background_colors(pumped_level_lookup, theme)
 
 
-def process_audio_data(audio_data):
+def process_audio_data(audio_data, theme):
     """
     window: Fades the edges of the audio chunk to prevent glitchy noise.
     rfft: Splits the blended wave into its component musical pitches.
@@ -91,7 +97,7 @@ def process_audio_data(audio_data):
     fft_split = np.array_split(fft_magnitude, FREQUENCY_BINS)
 
     for i, bin_data in enumerate(fft_split):
-        process_frequency_bin(i, bin_data)
+        process_frequency_bin(i, bin_data, theme)
 
 
 def audio_callback(indata, frames, time_info, status):
@@ -100,14 +106,20 @@ def audio_callback(indata, frames, time_info, status):
     audio_queue.put(audio_buffer.copy())
 
 
-def main():
-    user_status_style = tmux.get_global_tmux_option("status-style")
-    user_status_left = tmux.get_global_tmux_option("status-left")
-    user_status_right = tmux.get_global_tmux_option("status-right")
-    user_window_status_current_style = tmux.get_global_tmux_option(
+def start(theme):
+    global USER_STATUS_STYLE
+    global USER_STATUS_LEFT
+    global USER_STATUS_RIGHT
+    global USER_WINDOW_STATUS_CURRENT_STYLE
+    global USER_WINDOW_STATUS_STYLE
+
+    USER_STATUS_STYLE = tmux.get_global_tmux_option("status-style")
+    USER_STATUS_LEFT = tmux.get_global_tmux_option("status-left")
+    USER_STATUS_RIGHT = tmux.get_global_tmux_option("status-right")
+    USER_WINDOW_STATUS_CURRENT_STYLE = tmux.get_global_tmux_option(
         "window-status-current-style"
     )
-    user_window_status_style = tmux.get_global_tmux_option("window-status-style")
+    USER_WINDOW_STATUS_STYLE = tmux.get_global_tmux_option("window-status-style")
 
     input_stream = sd.RawInputStream(
         samplerate=SAMPLE_RATE,
@@ -131,16 +143,34 @@ def main():
                     latest_frame = audio_queue.get_nowait()
 
                 if latest_frame is not None:
-                    process_audio_data(latest_frame)
+                    process_audio_data(latest_frame, theme)
         except KeyboardInterrupt:
-            tmux.reset_user_tmux_option("status-style", user_status_style)
-            tmux.reset_user_tmux_option("status-left", user_status_left)
-            tmux.reset_user_tmux_option("status-right", user_status_right)
-            tmux.reset_user_tmux_option(
-                "window-status-current-style", user_window_status_current_style
-            )
-            tmux.reset_user_tmux_option("window-status-style", user_window_status_style)
+            tmux.reset_user_tmux_option("status-style", USER_STATUS_STYLE)
+            tmux.reset_user_tmux_option("status-left", USER_STATUS_LEFT)
+            tmux.reset_user_tmux_option("status-right", USER_STATUS_RIGHT)
+            tmux.reset_user_tmux_option("window-status-current-style", USER_WINDOW_STATUS_CURRENT_STYLE)
+            tmux.reset_user_tmux_option("window-status-style", USER_WINDOW_STATUS_STYLE)
 
 
-if __name__ == "__main__":
-    main()
+def run():
+    selected_theme = themes.themes.get(sys.argv[1], None)
+    if selected_theme is None:
+        raise ValueError(f"Selected theme does not exist: {selected_theme}")
+
+    start(selected_theme)
+
+
+def handle_stop(signum, frame):
+    print("visualizer stopped")
+
+    tmux.reset_user_tmux_option("status-style", USER_STATUS_STYLE)
+    tmux.reset_user_tmux_option("status-left", USER_STATUS_LEFT)
+    tmux.reset_user_tmux_option("status-right", USER_STATUS_RIGHT)
+    tmux.reset_user_tmux_option("window-status-current-style", USER_WINDOW_STATUS_CURRENT_STYLE)
+    tmux.reset_user_tmux_option("window-status-style", USER_WINDOW_STATUS_STYLE)
+
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, handle_stop)
+signal.signal(signal.SIGINT, handle_stop)

@@ -1,4 +1,3 @@
-import colors
 import libtmux
 import re
 
@@ -11,22 +10,14 @@ def get_global_tmux_option(option):
     return server.show_option(option, global_=True)
 
 
-def get_global_tmux_option(option):
+def update_user_status_background_colors(i, theme):
     server = libtmux.Server()
     if not server.sessions:
         return
 
-    return server.show_option(option, global_=True)
-
-
-def update_user_status_background_colors(i):
-    server = libtmux.Server()
-    if not server.sessions:
-        return
-
-    status_style_color = colors.GRAY_GRADIENT[i]
-    window_status_current_style_color = colors.GRAY_GRADIENT[max(0, i - 5)]
-    window_status_style_color = colors.GRAY_GRADIENT[max(0, i - 10)]
+    status_style_color = theme[i]
+    window_status_current_style_color = theme[max(0, i - 5)]
+    window_status_style_color = theme[max(0, i - 10)]
 
     regex = r"bg=[^,\]]+"
     status_left = get_global_tmux_option("status-left")

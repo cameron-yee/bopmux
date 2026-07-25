@@ -2,18 +2,22 @@
 
 Turns TMUX status bar into a sound visualizer
 
-## Running
+## Building
 
 1. Clone repo
-2. Run `uv run main.py` or `uv run main.py &`
-3. Play Spotify or whatever
+2. Run `sudo ./build.sh`
+
+## Running
+
+1. Run `bopmux start [gray,blue,pink]`
+2. Play Spotify or whatever
+3. Run `bopmux stop` to stop
 
 You have to be running TMUX. Should be obvious, but you never know.
 
-## Cleanup
+## Force kill
 
-Run `Ctrl +  C` or
-`pgrep -f "uv run main.py"` followed by `kill <PID>`
+`pgrep -f "bopmux-visualizer"` followed by `kill <PID>`
 
 ### MacOS
 
