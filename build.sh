@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 if [ -d "dist" ]; then
     rm -rf dist
 fi
