@@ -7,16 +7,14 @@ VISUALIZER_EXECUTABLE = "bopmux-visualizer"
 VISUALIZER_LINK_PATH = "/usr/local/bin/bopmux-visualizer"
 RUNNER_LOG = "runner.log"
 
+
 def start_visualizer(theme):
     with open(RUNNER_LOG, "w") as log_file:
         process = subprocess.Popen(
-            [
-                VISUALIZER_EXECUTABLE,
-                theme
-            ],
-            start_new_session=True, # Disconnects from the parent terminal group
-            stdout=log_file, # Silences output so it doesn't break the shell
-            stderr=log_file
+            [VISUALIZER_EXECUTABLE, theme],
+            start_new_session=True,  # Disconnects from the parent terminal group
+            stdout=log_file,  # Silences output so it doesn't break the shell
+            stderr=log_file,
         )
         print(process.pid)
         sys.exit(0)
@@ -24,10 +22,14 @@ def start_visualizer(theme):
 
 def run():
     parser = argparse.ArgumentParser(description="bopmux")
-    subparsers = parser.add_subparsers(dest="command", required=True, help="start or stop")
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, help="start or stop"
+    )
 
     start = subparsers.add_parser("start", help="Start bopmux")
-    start.add_argument("theme", choices=["gray", "blue", "pink"], default="gray", help="Pick a theme.")
+    start.add_argument(
+        "theme", choices=["gray", "blue", "pink"], default="gray", help="Pick a theme."
+    )
     start = subparsers.add_parser("stop", help="Stop bopmux")
 
     # subparsers.add_parser("stop", help="Stop bopmux")
