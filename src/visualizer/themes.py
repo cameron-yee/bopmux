@@ -97,4 +97,42 @@ BLUE_GRADIENT = [
     "#F0F8FF",  # Alice Blue
 ]
 
-themes = {"gray": GRAY_GRADIENT, "pink": PINK_GRADIENT, "blue": BLUE_GRADIENT}
+ORANGE_GRADIENT = [
+    "#261401",
+    "#2D1802",
+    "#351B02",
+    "#3C1F03",
+    "#442303",
+    "#4B2703",
+    "#532B04",
+    "#5A2F04",
+    "#623304",
+    "#693705",
+    "#703B05",
+    "#783F06",
+    "#7F4306",
+    "#874706",
+    "#8E4B07",
+    "#964E07",
+    "#9D5207",
+    "#A55608",
+    "#AC5A08",
+    "#B45E09",
+    "#BB6209",
+    "#C36609",
+    "#CA6A0A",
+    "#D26E0A",
+    "#D9720A",
+    "#E1760B",
+    "#E87A0B",
+    "#F07E0C",
+    "#F7810C",
+    "#FF850C",
+]
+
+themes = {
+    "gray": GRAY_GRADIENT,
+    "pink": PINK_GRADIENT,
+    "blue": BLUE_GRADIENT,
+    "orange": ORANGE_GRADIENT,
+}
