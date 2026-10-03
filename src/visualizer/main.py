@@ -33,6 +33,8 @@ GRAVITY = 0.5  # How fast the bars float down (characters per frame)
 REFRESH_RATE = 1 / 30
 
 TMUX_SERVER = None
+USER_PANE_ACTIVE_BORDER_STYLE = None
+USER_PANE_BORDER_STYLE = None
 USER_STATUS_STYLE = None
 USER_STATUS_LEFT = None
 USER_STATUS_RIGHT = None
@@ -112,6 +114,8 @@ def audio_callback(indata, frames, time_info, status):
 
 def start(theme):
     global TMUX_SERVER
+    global USER_PANE_ACTIVE_BORDER_STYLE
+    global USER_PANE_BORDER_STYLE
     global USER_STATUS_STYLE
     global USER_STATUS_LEFT
     global USER_STATUS_RIGHT
@@ -120,6 +124,12 @@ def start(theme):
 
     TMUX_SERVER = tmux.init_server()
 
+    USER_PANE_ACTIVE_BORDER_STYLE = tmux.get_global_tmux_option(
+        "pane-active-border-style", TMUX_SERVER
+    )
+    USER_PANE_BORDER_STYLE = tmux.get_global_tmux_option(
+        "pane-border-style", TMUX_SERVER
+    )
     USER_STATUS_STYLE = tmux.get_global_tmux_option("status-style", TMUX_SERVER)
     USER_STATUS_LEFT = tmux.get_global_tmux_option("status-left", TMUX_SERVER)
     USER_STATUS_RIGHT = tmux.get_global_tmux_option("status-right", TMUX_SERVER)
@@ -156,6 +166,12 @@ def start(theme):
                 if latest_frame is not None:
                     process_audio_data(latest_frame, theme)
         except KeyboardInterrupt:
+            tmux.reset_user_tmux_option(
+                "pane-active-border-style", USER_PANE_ACTIVE_BORDER_STYLE, TMUX_SERVER
+            )
+            tmux.reset_user_tmux_option(
+                "pane-border-style", USER_PANE_BORDER_STYLE, TMUX_SERVER
+            )
             tmux.reset_user_tmux_option("status-style", USER_STATUS_STYLE, TMUX_SERVER)
             tmux.reset_user_tmux_option("status-left", USER_STATUS_LEFT, TMUX_SERVER)
             tmux.reset_user_tmux_option("status-right", USER_STATUS_RIGHT, TMUX_SERVER)
@@ -181,6 +197,12 @@ def handle_stop(signum, frame):
     global TMUX_SERVER
     print("visualizer stopped")
 
+    tmux.reset_user_tmux_option(
+        "pane-active-border-style", USER_PANE_ACTIVE_BORDER_STYLE, TMUX_SERVER
+    )
+    tmux.reset_user_tmux_option(
+        "pane-border-style", USER_PANE_BORDER_STYLE, TMUX_SERVER
+    )
     tmux.reset_user_tmux_option("status-style", USER_STATUS_STYLE, TMUX_SERVER)
     tmux.reset_user_tmux_option("status-left", USER_STATUS_LEFT, TMUX_SERVER)
     tmux.reset_user_tmux_option("status-right", USER_STATUS_RIGHT, TMUX_SERVER)

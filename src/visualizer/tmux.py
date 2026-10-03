@@ -19,9 +19,35 @@ def initialize_visualizer_config(server):
         return
 
     regex = r"bg=[^,\]]+"
-    status_left = get_global_tmux_option("status-left", server)
-
     server_commands = []
+
+    pane_active_border_style = get_global_tmux_option(
+        "pane-active-border-style", server
+    )
+    if pane_active_border_style is not None and pane_active_border_style:
+        updated_pane_active_border_style = re.sub(
+            regex, "fg=#{@visualizer_current_bg}", pane_active_border_style
+        )
+        server_commands.extend(
+            [
+                "set-option",
+                "-g",
+                "pane-active-border-style",
+                updated_pane_active_border_style,
+                ";",
+            ]
+        )
+
+    pane_border_style = get_global_tmux_option("pane-border-style", server)
+    if pane_border_style is not None and pane_border_style:
+        updated_pane_border_style = re.sub(
+            regex, "fg=#{@visualizer_bg}", pane_border_style
+        )
+        server_commands.extend(
+            ["set-option", "-g", "pane-border-style", updated_pane_border_style, ";"]
+        )
+
+    status_left = get_global_tmux_option("status-left", server)
     if status_left is not None and status_left:
         updated_status_left = re.sub(regex, "bg=#{@visualizer_bg}", status_left)
         server_commands.extend(
@@ -37,6 +63,16 @@ def initialize_visualizer_config(server):
 
     server_commands.extend(
         [
+            "set-option",
+            "-g",
+            "pane-active-border-style",
+            "fg=#{@visualizer_current_bg}",
+            ";",
+            "set-option",
+            "-g",
+            "pane-border-style",
+            "fg=#{@visualizer_bg}",
+            ";",
             "set-option",
             "-g",
             "status-style",
