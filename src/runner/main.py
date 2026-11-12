@@ -20,6 +20,19 @@ def start_visualizer(theme):
         sys.exit(0)
 
 
+def stop_visualizer():
+    for proc in psutil.process_iter():
+        try:
+            positions = proc.cmdline()
+            for position in positions:
+                if position == VISUALIZER_LINK_PATH:
+                    print(f"Stopping bopmux process {proc.pid}")
+                    proc.terminate()
+                    return
+        except psutil.AccessDenied, psutil.ZombieProcess:
+            pass
+
+
 def run():
     parser = argparse.ArgumentParser(description="bopmux")
     subparsers = parser.add_subparsers(
@@ -38,19 +51,9 @@ def run():
     # subparsers.add_parser("stop", help="Stop bopmux")
     args = parser.parse_args()
     if args.command == "start":
+        stop_visualizer()
         start_visualizer(args.theme)
         return
 
     if args.command == "stop":
-        for proc in psutil.process_iter():
-            try:
-                positions = proc.cmdline()
-                for position in positions:
-                    if position == VISUALIZER_LINK_PATH:
-                        print(f"Stopping bopmux process {proc.pid}")
-                        proc.terminate()
-                        return
-            except psutil.AccessDenied, psutil.ZombieProcess:
-                pass
-
-        print("Didn't find running process for bopmux")
+        stop_visualizer()
