@@ -50,7 +50,7 @@ def run():
                         print(f"Stopping bopmux process {proc.pid}")
                         proc.terminate()
                         return
-            except psutil.AccessDenied:
+            except psutil.AccessDenied, psutil.ZombieProcess:
                 pass
 
         print("Didn't find running process for bopmux")
