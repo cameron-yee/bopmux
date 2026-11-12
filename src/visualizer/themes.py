@@ -130,9 +130,43 @@ ORANGE_GRADIENT = [
     "#FF850C",
 ]
 
+YELLOW_GRADIENT = [
+    "#3A2F03",
+    "#483B04",
+    "#564704",
+    "#645304",
+    "#735F04",
+    "#816C04",
+    "#8F7804",
+    "#9E8504",
+    "#AD9304",
+    "#BBA004",
+    "#CAAE03",
+    "#D9BC03",
+    "#E8CA02",
+    "#F7D901",
+    "#FFE109",
+    "#FFE417",
+    "#FEE726",
+    "#FDE935",
+    "#FDEB44",
+    "#FCED53",
+    "#FCEF62",
+    "#FCF170",
+    "#FCF27F",
+    "#FCF48D",
+    "#FCF69C",
+    "#FCF7AA",
+    "#FCF9B8",
+    "#FCFAC6",
+    "#FDFBD4",
+    "#FDFDE2",
+]
+
 themes = {
     "gray": GRAY_GRADIENT,
     "pink": PINK_GRADIENT,
     "blue": BLUE_GRADIENT,
     "orange": ORANGE_GRADIENT,
+    "yellow": YELLOW_GRADIENT,
 }

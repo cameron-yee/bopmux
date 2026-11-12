@@ -29,7 +29,7 @@ def run():
     start = subparsers.add_parser("start", help="Start bopmux")
     start.add_argument(
         "theme",
-        choices=["gray", "blue", "pink", "orange"],
+        choices=["gray", "blue", "pink", "orange", "yellow"],
         default="gray",
         help="Pick a theme.",
     )
